@@ -1,0 +1,234 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Doctor's Report</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+        }
+
+        .card {
+            background-color: white;
+            border-radius: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+            .card:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 10px 15px rgba(0, 0, 0, 0.15);
+            }
+    </style>
+</head>
+<body class="p-6 md:p-10 lg:p-16">
+    <div class="max-w-7xl mx-auto py-8">
+        <div class="flex justify-between items-center mb-8">
+            <h1 class="text-3xl font-bold text-gray-900">Practice Performance Report</h1>
+            <span class="text-sm font-medium text-gray-500">Report generated: 2024-09-02</span>
+        </div>
+
+        <!-- Summary Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div class="card p-6 flex items-center justify-between">
+                <div>
+                    <h2 class="text-sm font-medium text-gray-500">Total Patients</h2>
+                    <p class="text-3xl font-bold text-blue-600 mt-1">4,120</p>
+                </div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm-6-2a6 6 0 00-6-6v12h12v-12a6 6 0 00-6-6z" />
+                </svg>
+            </div>
+            <div class="card p-6 flex items-center justify-between">
+                <div>
+                    <h2 class="text-sm font-medium text-gray-500">Appointments This Month</h2>
+                    <p class="text-3xl font-bold text-green-600 mt-1">158</p>
+                </div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h8m-1-4h1m-1 4h.01M7 11h.01" />
+                </svg>
+            </div>
+            <div class="card p-6 flex items-center justify-between">
+                <div>
+                    <h2 class="text-sm font-medium text-gray-500">New Patients (30 Days)</h2>
+                    <p class="text-3xl font-bold text-purple-600 mt-1">25</p>
+                </div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+            </div>
+            <div class="card p-6 flex items-center justify-between">
+                <div>
+                    <h2 class="text-sm font-medium text-gray-500">Active Consultations</h2>
+                    <p class="text-3xl font-bold text-orange-600 mt-1">12</p>
+                </div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.893a.96.96 0 00-.163-.09l-3.3-1.073L1.22 17.58l-1.395-3.893a.96.96 0 00-.163-.09L.436 12l-1.57-.456a.96.96 0 00-.163-.09L-3 20l1.395-3.893a.96.96 0 00-.163-.09l-3.3-1.073L1.22 17.58z" />
+                </svg>
+            </div>
+        </div>
+
+        <!-- Charts Section -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            <div class="card p-6">
+                <h2 class="text-xl font-semibold text-gray-800 mb-4">Patient Visits Last 6 Months</h2>
+                <canvas id="monthlyVisitsChart"></canvas>
+            </div>
+            <div class="card p-6">
+                <h2 class="text-xl font-semibold text-gray-800 mb-4">Patient Demographics by Age</h2>
+                <canvas id="demographicsChart"></canvas>
+            </div>
+            <div class="card p-6 lg:col-span-2">
+                <h2 class="text-xl font-semibold text-gray-800 mb-4">Vitals Trends for Key Patients</h2>
+                <canvas id="vitalsTrendChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Patient List and Download Section -->
+        <div class="card p-6">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-4">Patient List</h2>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Visit</th>
+                            <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="patientList" class="bg-white divide-y divide-gray-200">
+                        <tr>
+                            <td colspan="4" class="px-6 py-4 text-center text-sm text-gray-500">Loading patients...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    // This function fetches patient data from the C# controller's API endpoint.
+                    async function fetchPatients() {
+                        const listContainer = document.getElementById('patientList');
+                        listContainer.innerHTML = '<tr><td colspan="4" class="px-6 py-4 text-center text-sm text-gray-500">Loading patients...</td></tr>';
+                        try {
+                            const response = await fetch('/api/Report/patients');
+                            if (!response.ok) {
+                                throw new Error('Network response was not ok');
+                            }
+                            const patientsData = await response.json();
+                            renderPatientList(patientsData);
+                        } catch (error) {
+                            console.error("Error fetching patient data:", error);
+                            listContainer.innerHTML = `
+                                <tr><td colspan="4" class="px-6 py-4 text-center text-sm text-red-500">Error loading patients from the database. Please check your SQL Server connection and the 'Patients' table.</td></tr>
+                            `;
+                        }
+                    }
+
+                    // Function to render the patient list
+                    function renderPatientList(patientsData) {
+                        const listContainer = document.getElementById('patientList');
+                        listContainer.innerHTML = '';
+                        if (patientsData.length === 0) {
+                            listContainer.innerHTML = `
+                                <tr><td colspan="4" class="px-6 py-4 text-center text-sm text-gray-500">No patients found.</td></tr>
+                            `;
+                            return;
+                        }
+
+                        patientsData.forEach(patient => {
+                            const row = document.createElement('tr');
+                            row.innerHTML = `
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${patient.name || 'N/A'}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${patient.id}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${patient.lastVisit || 'N/A'}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <button class="download-btn text-blue-600 hover:text-blue-900" data-patient-id="${patient.id}">Download Report</button>
+                                </td>
+                            `;
+                            listContainer.appendChild(row);
+                        });
+
+                        document.querySelectorAll('.download-btn').forEach(button => {
+                            button.addEventListener('click', (event) => {
+                                const patientId = event.target.dataset.patientId;
+                                const patient = patientsData.find(p => p.id === patientId);
+                                if (patient) {
+                                    generateAndDownloadReport(patient);
+                                }
+                            });
+                        });
+                    }
+
+                    // Function to generate and download the report
+                    function generateAndDownloadReport(patient) {
+                        const reportContent = `
+        Doctor's Patient Report
+
+        ---------------------------------------
+        Patient Name: ${patient.name || 'N/A'}
+        Patient ID: ${patient.id}
+        Last Visit: ${patient.lastVisit || 'N/A'}
+        ---------------------------------------
+
+        Report Summary:
+        No report summary available from this view.
+
+        Report Generated on: ${new Date().toLocaleDateString()}
+                        `.trim();
+
+                        const blob = new Blob([reportContent], { type: 'text/plain' });
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = `${(patient.name || 'Patient').replace(/\s/g, '_')}_Report_${patient.id}.txt`;
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                        URL.revokeObjectURL(url);
+                    }
+
+                    // --- Chart Initialization (unchanged) ---
+                    const monthlyVisitsData = {
+                        labels: ['March', 'April', 'May', 'June', 'July', 'August'],
+                        datasets: [{ label: 'Number of Visits', data: [120, 150, 140, 165, 155, 170], backgroundColor: 'rgba(59, 130, 246, 0.5)', borderColor: 'rgb(59, 130, 246)', borderWidth: 1 }]
+                    };
+                    const monthlyVisitsConfig = { type: 'bar', data: monthlyVisitsData, options: { responsive: true, scales: { y: { beginAtZero: true } } } };
+                    const monthlyVisitsChart = new Chart(document.getElementById('monthlyVisitsChart'), monthlyVisitsConfig);
+
+                    const demographicsData = {
+                        labels: ['0-18', '19-40', '41-65', '65+'],
+                        datasets: [{
+                            label: 'Patient Count',
+                            data: [800, 1800, 1100, 420],
+                            backgroundColor: ['rgba(249, 115, 22, 0.7)', 'rgba(34, 197, 94, 0.7)', 'rgba(99, 102, 241, 0.7)', 'rgba(239, 68, 68, 0.7)'],
+                            borderColor: ['rgb(249, 115, 22)', 'rgb(34, 197, 94)', 'rgb(99, 102, 241)', 'rgb(239, 68, 68)'],
+                            hoverOffset: 4
+                        }]
+                    };
+                    const demographicsConfig = { type: 'pie', data: demographicsData, options: { responsive: true, plugins: { legend: { position: 'top' }, title: { display: true, text: 'Patient Distribution' } } } };
+                    const demographicsChart = new Chart(document.getElementById('demographicsChart'), demographicsConfig);
+
+                    const vitalsTrendData = {
+                        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'],
+                        datasets: [{ label: 'Systolic Blood Pressure (mmHg)', data: [145, 138, 142, 135, 130, 128, 125], fill: false, borderColor: 'rgb(75, 192, 192)', tension: 0.1 }]
+                    };
+                    const vitalsTrendConfig = {
+                        type: 'line', data: vitalsTrendData, options: { responsive: true, plugins: { legend: { position: 'top' }, title: { display: true, text: 'Blood Pressure Trend for Patient ID 12345' } }, scales: { y: { title: { display: true, text: 'Blood Pressure (mmHg)' } } } }
+                    };
+                    const vitalsTrendChart = new Chart(document.getElementById('vitalsTrendChart'), vitalsTrendConfig);
+
+                    // Fetch and render patient data when the page loads
+                    fetchPatients();
+                });
+    </script>
+</body>
+</html>

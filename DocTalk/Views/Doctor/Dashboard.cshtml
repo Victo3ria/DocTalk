@@ -1,0 +1,274 @@
+﻿@model DocTalk.Models.DoctorDashboardViewModel
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
+    <style>
+        import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+        html, body {
+            height: 100%;
+            margin: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+            color: #1f2937;
+            display: flex;
+        }
+
+        .sidebar {
+            width: 280px;
+            background-color: #ffffff;
+            border-right: 1px solid #e5e7eb;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            min-height: 100vh;
+            position: fixed;
+            top: 0;
+            left: 0;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            z-index: 10;
+        }
+
+        .main-content {
+            margin-left: 280px;
+            padding: 24px;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        /* Styles for the image and overlay content */
+        .image-overlay-container {
+            position: relative;
+            width: 100%;
+            flex-grow: 1;
+            border-radius: 0.75rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+            background-image: url('images/Inpatient-Theatre-KPCC-photo-1-768x432.jpg');
+            background-size: cover;
+            background-position: center;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .overlay-content {
+            width: 90%;
+            max-width: 1000px;
+            height: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            padding: 1.5rem;
+            box-sizing: border-box;
+
+            media (min-width: 768px) {
+                flex-direction: row;
+            }
+        }
+
+        .overlay-card {
+            background-color: rgba(255, 255, 255, 0.85);
+            border-radius: 0.75rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            padding: 1.5rem;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+            /* Adjust chatbox height within overlay card */
+            .overlay-card .h-\[500px\] {
+                height: 300px;
+            }
+
+        .received-message {
+            background-color: #e5e7eb;
+            color: #1f2937;
+            align-self: flex-start;
+            border-radius: 0.75rem 0.75rem 0.75rem 0.25rem;
+        }
+
+        .sent-message {
+            background-color: #2563eb;
+            color: #ffffff;
+            align-self: flex-end;
+            border-radius: 0.75rem 0.75rem 0.25rem 0.75rem;
+        }
+    </style>
+</head>
+<body class="flex">
+
+    <div class="sidebar">
+        <div class="text-center mb-8">
+            <div class="w-full mb-4 flex justify-center">
+                <img src="images/logo.jfif" alt="DocTalk Logo" class="w-32 h-32 object-contain">
+            </div>
+            <h1 class="text-xl font-bold text-gray-800">DocTalk</h1>
+        </div>
+
+        <div class="flex flex-col items-center mb-10">
+            <div class="w-24 h-24 rounded-full overflow-hidden mb-4 border-2 border-blue-500 shadow-md">
+                <img src="https://placehold.co/96x96/60a5fa/fff?text=User" alt="User Avatar" class="w-full h-full object-cover">
+            </div>
+            <p class="text-lg font-semibold text-gray-800">@Model.DoctorName</p>
+            <p class="text-sm text-gray-500">Doctor</p>
+        </div>
+
+        <nav class="w-full">
+            <a href="#" class="flex items-center space-x-3 p-3 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors duration-200 mb-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+                <span>Dashboard</span>
+            </a>
+            <a href="#" class="flex items-center space-x-3 p-3 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors duration-200 mb-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm-6-2a6 6 0 00-6-6v12h12v-12a6 6 0 00-6-6z"></path></svg>
+                <span>Patients</span>
+            </a>
+            <a href="#" class="flex items-center space-x-3 p-3 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors duration-200 mb-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17.25a.75.75 0 01.75-.75h.5a.75.75 0 01.75.75v1.5a.75.75 0 01-.75.75h-.5a.75.75 0 01-.75-.75v-1.5zM15 17.25a.75.75 0 01.75-.75h.5a.75.75 0 01.75.75v1.5a.75.75 0 01-.75.75h-.5a.75.75 0 01-.75-.75v-1.5zM12 10.5h.008v.008H12V10.5z"></path></svg>
+                <span>Reports</span>
+            </a>
+            <a href="#" class="flex items-center space-x-3 p-3 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors duration-200 mb-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.525.27.994.488 1.518.666z"></path></svg>
+                <span>Settings</span>
+            </a>
+        </nav>
+
+        <div class="mt-auto w-full">
+            <a href="#" class="flex items-center justify-center p-3 rounded-lg text-white bg-blue-600 hover:bg-blue-700 transition-colors duration-200">
+                <span>Logout</span>
+            </a>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="image-overlay-container">
+            <div class="overlay-content">
+                <div class="overlay-card">
+                    <h3 class="text-xl font-bold text-gray-900 mb-4">Services List</h3>
+                    <div class="space-y-4">
+                        @foreach (var service in Model.Services)
+                        {
+                            <div class="p-4 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors duration-200">
+                                <p class="font-medium text-gray-800">@service</p>
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                <div class="overlay-card flex-col h-[500px]">
+                    <div class="flex-1 overflow-y-auto mb-4 border border-gray-200 rounded-lg p-4 bg-gray-50 flex flex-col space-y-2" id="chat-messages-container">
+                        <p class="text-sm text-gray-600">Select a patient to begin a consultation.</p>
+                    </div>
+                    <form id="chat-form" class="flex items-center space-x-3">
+                        <input type="text" id="chat-input" placeholder="Type a message..." class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <button type="submit" class="px-6 py-2 rounded-lg text-white bg-blue-600 hover:bg-blue-700 transition-colors duration-200">
+                            Send
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <hr>
+
+        <h2 class="text-2xl font-bold text-gray-900">Dashboard Overview</h2>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <h4 class="text-sm font-medium text-gray-500 mb-2">Total Patients</h4>
+                <div class="text-3xl font-bold text-blue-600">4,120</div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <h4 class="text-sm font-medium text-gray-500 mb-2">Upcoming Appointments</h4>
+                <div class="text-3xl font-bold text-orange-500">25</div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <h4 class="text-sm font-medium text-gray-500 mb-2">New Messages</h4>
+                <div class="text-3xl font-bold text-green-600">7</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let connection = null;
+        let currentUser = 'doctor@1'; // The doctor's unique ID
+        let currentRecipient = null;
+        const chatMessagesContainer = document.getElementById('chat-messages-container');
+        const chatForm = document.getElementById('chat-form');
+        const chatInput = document.getElementById('chat-input');
+
+        async function startConnection() {
+            connection = new signalR.HubConnectionBuilder()
+                .withUrl("/chathub")
+                .withAutomaticReconnect()
+                .build();
+
+            connection.on("ReceiveMessage", (sender, message) => {
+                if (sender === currentRecipient) {
+                    appendMessage(sender, message);
+                }
+            });
+
+            try {
+                await connection.start();
+                console.log("SignalR Connected! Doctor is online.");
+                await connection.invoke("JoinChat", currentUser);
+            } catch (err) {
+                console.error("SignalR Connection Error: ", err);
+            }
+        }
+
+        function appendMessage(sender, message) {
+            const isMyMessage = sender === currentUser;
+            const messageElement = document.createElement('div');
+            messageElement.className = `p-3 my-1 rounded-lg max-w-[80%] break-words ${isMyMessage ? 'sent-message self-end' : 'received-message self-start'}`;
+            messageElement.innerHTML = `<p class="text-sm">${message}</p>`;
+            chatMessagesContainer.appendChild(messageElement);
+            chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
+        }
+
+        chatForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const message = chatInput.value;
+            if (connection && connection.state === signalR.HubConnectionState.Connected && message && currentRecipient) {
+                try {
+                    await connection.invoke("SendMessage", currentUser, currentRecipient, message);
+                    appendMessage(currentUser, message);
+                    chatInput.value = '';
+                } catch (err) {
+                    console.error("SendMessage Error: ", err);
+                }
+            } else {
+                console.log("Please select a patient to chat with.");
+            }
+        });
+
+        document.querySelectorAll('.overlay-card .space-y-4 > div').forEach(item => {
+            item.addEventListener('click', (event) => {
+                const patientId = event.currentTarget.dataset.patientId;
+                if (patientId) {
+                    currentRecipient = patientId;
+                    chatMessagesContainer.innerHTML = '';
+                    appendMessage("System", `You are now chatting with ${patientId}.`);
+                }
+            });
+        });
+
+        document.addEventListener('DOMContentLoaded', startConnection);
+    </script>
+</body>
+</html>

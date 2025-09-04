@@ -1,0 +1,314 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patient Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+        }
+
+        .card {
+            background-color: white;
+            border-radius: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+            .card:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 10px 15px rgba(0, 0, 0, 0.15);
+            }
+    </style>
+</head>
+<body class="p-6 md:p-10 lg:p-16">
+    <!-- Firebase SDK Imports -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, onSnapshot, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Global variables for Firebase configuration
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+        let db, auth, userId;
+        let unsubscribePatientData;
+        const patientId = "patient-12345"; // Static patient ID for this example
+
+        // Function to initialize Firebase and listeners
+        const initFirebaseAndListeners = async () => {
+            try {
+                const app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+                setLogLevel('Debug');
+
+                // Sign in with the provided custom token or anonymously
+                if (initialAuthToken) {
+                    await signInWithCustomToken(auth, initialAuthToken);
+                } else {
+                    await signInAnonymously(auth);
+                }
+
+                // Listen for auth state changes
+                onAuthStateChanged(auth, (user) => {
+                    if (user) {
+                        userId = user.uid;
+                        // Display user ID for debugging and collaborative features
+                        const userIdDisplay = document.getElementById('userIdDisplay');
+                        if (userIdDisplay) {
+                            userIdDisplay.textContent = `User ID: ${userId}`;
+                        }
+                        setupPatientDataListener(userId);
+                    } else {
+                        // User is signed out
+                        userId = null;
+                        if (unsubscribePatientData) {
+                            unsubscribePatientData();
+                        }
+                        const userIdDisplay = document.getElementById('userIdDisplay');
+                        if (userIdDisplay) {
+                            userIdDisplay.textContent = 'User ID: N/A (Signed Out)';
+                        }
+                    }
+                });
+
+                document.getElementById('save-notes-btn').addEventListener('click', async () => {
+                    const notes = document.getElementById('notes-textarea').value;
+                    const patientDocRef = doc(db, `/artifacts/${appId}/users/${userId}/patients/${patientId}`);
+                    try {
+                        await setDoc(patientDocRef, { notes }, { merge: true });
+                        showStatusMessage('Notes saved successfully!', 'green');
+                    } catch (e) {
+                        console.error("Error saving notes: ", e);
+                        showStatusMessage('Error saving notes.', 'red');
+                    }
+                });
+
+            } catch (e) {
+                console.error("Firebase initialization or auth error: ", e);
+                showStatusMessage('Application error. Check the console for details.', 'red');
+            }
+        };
+
+        const setupPatientDataListener = (currentUserId) => {
+            if (unsubscribePatientData) {
+                unsubscribePatientData(); // Unsubscribe from previous listener
+            }
+            const patientDocRef = doc(db, `/artifacts/${appId}/users/${currentUserId}/patients/${patientId}`);
+
+            // Listen for real-time changes
+            unsubscribePatientData = onSnapshot(patientDocRef, (docSnap) => {
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    renderPatientData(data);
+                } else {
+                    console.log("No such patient document! Initializing...");
+                    const initialData = {
+                        name: "John Doe",
+                        id: patientId,
+                        demographics: {
+                            dob: "01/15/1990",
+                            age: 35,
+                            gender: "Male",
+                            address: "123 Health Ave, Sometown, USA"
+                        },
+                        vitals: {
+                            bp: "120/80 mmHg",
+                            temp: "98.6 °F",
+                            hr: "72 bpm",
+                            spo2: "98%"
+                        },
+                        history: {
+                            conditions: ["Hypertension", "Type 2 Diabetes"],
+                            allergies: ["Penicillin"]
+                        },
+                        medications: ["Metformin 500mg daily", "Lisinopril 10mg daily"],
+                        appointments: ["Cardiology (2025-09-20)", "Dietician (2025-10-05)"],
+                        notes: ""
+                    };
+                    setDoc(patientDocRef, initialData).then(() => {
+                        console.log("Initial patient data set.");
+                    }).catch(e => {
+                        console.error("Error setting initial data: ", e);
+                    });
+                }
+            });
+        };
+
+        const renderPatientData = (data) => {
+            // Demographics
+            document.getElementById('patient-name').textContent = data.name || "N/A";
+            document.getElementById('patient-id').textContent = `ID: ${data.id || "N/A"}`;
+            document.getElementById('demographics-dob').textContent = data.demographics?.dob || "N/A";
+            document.getElementById('demographics-age').textContent = data.demographics?.age || "N/A";
+            document.getElementById('demographics-gender').textContent = data.demographics?.gender || "N/A";
+            document.getElementById('demographics-address').textContent = data.demographics?.address || "N/A";
+
+            // Medical History
+            const conditionsList = document.getElementById('history-conditions');
+            conditionsList.innerHTML = data.history?.conditions?.map(c => `<li class="p-2 bg-gray-100 rounded-lg">${c}</li>`).join('') || '<li class="p-2 text-gray-400">No conditions recorded.</li>';
+            const allergiesList = document.getElementById('history-allergies');
+            allergiesList.innerHTML = data.history?.allergies?.map(a => `<li class="p-2 bg-gray-100 rounded-lg">${a}</li>`).join('') || '<li class="p-2 text-gray-400">No allergies recorded.</li>';
+
+            // Vitals
+            document.getElementById('vitals-bp').textContent = data.vitals?.bp || "N/A";
+            document.getElementById('vitals-temp').textContent = data.vitals?.temp || "N/A";
+            document.getElementById('vitals-hr').textContent = data.vitals?.hr || "N/A";
+            document.getElementById('vitals-spo2').textContent = data.vitals?.spo2 || "N/A";
+
+            // Medications
+            const medicationsList = document.getElementById('medications-list');
+            medicationsList.innerHTML = data.medications?.map(m => `<li class="p-2 bg-blue-100 rounded-lg flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-500" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clip-rule="evenodd" /></svg>
+                <span>${m}</span>
+            </li>`).join('') || '<li class="p-2 text-gray-400">No medications listed.</li>';
+
+            // Appointments
+            const appointmentsList = document.getElementById('appointments-list');
+            appointmentsList.innerHTML = data.appointments?.map(a => `<li class="p-2 bg-purple-100 rounded-lg flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-purple-500" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd" /></svg>
+                <span>${a}</span>
+            </li>`).join('') || '<li class="p-2 text-gray-400">No upcoming appointments.</li>';
+
+            // Notes
+            document.getElementById('notes-textarea').value = data.notes || "";
+        };
+
+        const showStatusMessage = (message, color) => {
+            const statusBox = document.getElementById('status-box');
+            statusBox.textContent = message;
+            statusBox.className = `p-4 mt-4 text-center rounded-xl transition-opacity duration-300 ${color === 'green' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'} opacity-100`;
+            setTimeout(() => {
+                statusBox.className += ' opacity-0';
+            }, 3000);
+        };
+
+        window.onload = initFirebaseAndListeners;
+    </script>
+
+    <div class="max-w-7xl mx-auto py-8">
+        <!-- Header -->
+        <div class="card p-8 flex flex-col md:flex-row items-center justify-between gap-6 mb-8">
+            <div class="flex items-center gap-6">
+                <div class="h-24 w-24 bg-gray-200 rounded-full flex items-center justify-center text-5xl font-semibold text-gray-500">
+                    JD
+                </div>
+                <div>
+                    <h1 id="patient-name" class="text-3xl font-bold text-gray-900">Patient Name</h1>
+                    <p id="patient-id" class="text-xl text-gray-600 mt-1">ID: N/A</p>
+                </div>
+            </div>
+            <div id="userIdDisplay" class="text-gray-500 text-sm font-medium p-3 bg-gray-100 rounded-lg">User ID: N/A</div>
+        </div>
+
+        <!-- Main Content Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+            <!-- Demographics Card -->
+            <div class="card p-6">
+                <h2 class="text-2xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                    Demographics
+                </h2>
+                <div class="space-y-3 text-lg text-gray-600">
+                    <p><strong>DOB:</strong> <span id="demographics-dob"></span></p>
+                    <p><strong>Age:</strong> <span id="demographics-age"></span></p>
+                    <p><strong>Gender:</strong> <span id="demographics-gender"></span></p>
+                    <p><strong>Address:</strong> <span id="demographics-address"></span></p>
+                </div>
+            </div>
+
+            <!-- Vitals Card -->
+            <div class="card p-6">
+                <h2 class="text-2xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M16 16h.01" />
+                    </svg>
+                    Vitals
+                </h2>
+                <div class="space-y-3 text-lg text-gray-600">
+                    <p><strong>Blood Pressure:</strong> <span id="vitals-bp"></span></p>
+                    <p><strong>Temperature:</strong> <span id="vitals-temp"></span></p>
+                    <p><strong>Heart Rate:</strong> <span id="vitals-hr"></span></p>
+                    <p><strong>SpO₂:</strong> <span id="vitals-spo2"></span></p>
+                </div>
+            </div>
+
+            <!-- Medical History Card -->
+            <div class="card p-6 lg:col-span-1">
+                <h2 class="text-2xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h8m-1-4h1m-1 4h.01M7 11h.01" />
+                    </svg>
+                    Medical History
+                </h2>
+                <div class="space-y-4">
+                    <div>
+                        <h3 class="font-bold text-gray-700 mb-2">Conditions</h3>
+                        <ul id="history-conditions" class="space-y-2 text-sm text-gray-600">
+                            <!-- Populated by JS -->
+                        </ul>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-gray-700 mb-2">Allergies</h3>
+                        <ul id="history-allergies" class="space-y-2 text-sm text-gray-600">
+                            <!-- Populated by JS -->
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Medications Card -->
+            <div class="card p-6 md:col-span-2 lg:col-span-1">
+                <h2 class="text-2xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Current Medications
+                </h2>
+                <ul id="medications-list" class="space-y-3 text-sm font-medium text-gray-700">
+                    <!-- Populated by JS -->
+                </ul>
+            </div>
+
+            <!-- Appointments Card -->
+            <div class="card p-6 md:col-span-2 lg:col-span-1">
+                <h2 class="text-2xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h8m-1-4h1m-1 4h.01M7 11h.01" />
+                    </svg>
+                    Upcoming Appointments
+                </h2>
+                <ul id="appointments-list" class="space-y-3 text-sm font-medium text-gray-700">
+                    <!-- Populated by JS -->
+                </ul>
+            </div>
+
+            <!-- Notes Card -->
+            <div class="card p-6 md:col-span-2 lg:col-span-1">
+                <h2 class="text-2xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                    </svg>
+                    Doctor's Notes
+                </h2>
+                <textarea id="notes-textarea" class="w-full h-40 p-4 rounded-xl border-2 border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors duration-200" placeholder="Enter notes here..."></textarea>
+                <button id="save-notes-btn" class="mt-4 w-full bg-blue-600 text-white font-bold py-3 px-6 rounded-xl shadow-lg hover:bg-blue-700 transition-colors duration-200">
+                    Save Notes
+                </button>
+                <div id="status-box" class="opacity-0 transition-opacity duration-300"></div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
