@@ -3,283 +3,799 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard</title>
+    <title>MediPortal - Doctor Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://kit.fontawesome.com/4a2d74a7fd.js" crossorigin="anonymous"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-
-        html, body {
-            height: 100%;
-            margin: 0;
-        }
-
         body {
             font-family: 'Inter', sans-serif;
             background-color: #f3f4f6;
             color: #1f2937;
-            display: flex;
+            transition: background-color 0.3s, color 0.3s;
         }
 
-        .sidebar {
-            width: 280px;
-            background-color: #ffffff;
-            border-right: 1px solid #e5e7eb;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-            min-height: 100vh;
-            position: fixed;
-            top: 0;
-            left: 0;
-            padding: 24px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            z-index: 10;
-        }
-
-        .main-content {
-            margin-left: 280px;
-            padding: 24px;
-            flex-grow: 1;
-            display: flex;
-            flex-direction: column;
-            gap: 24px;
-        }
-
-        /* Styles for the image and overlay content */
-        .image-overlay-container {
-            position: relative;
-            width: 100%;
-            flex-grow: 1;
-            border-radius: 0.75rem;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-            overflow: hidden;
-            background-image: url('images/Inpatient-Theatre-KPCC-photo-1-768x432.jpg');
-            background-size: cover;
-            background-position: center;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .overlay-content {
-            width: 90%;
-            max-width: 1000px;
-            height: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 1.5rem;
-            padding: 1.5rem;
-            box-sizing: border-box;
-
-            @media (min-width: 768px) {
-                flex-direction: row;
+            body.dark {
+                background-color: #1a1a2e;
+                color: #e0e0e0;
             }
-        }
 
-        .overlay-card {
-            background-color: rgba(255, 255, 255, 0.85);
-            border-radius: 0.75rem;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-            padding: 1.5rem;
-            flex: 1;
+        .chat-container {
+            flex-grow: 1;
+            overflow-y: auto;
+            max-height: 400px;
+            min-height: 300px;
+            margin-bottom: 1rem;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            background-color: #f9fafb;
             display: flex;
             flex-direction: column;
+            gap: 0.5rem;
         }
 
-            /* Adjust chatbox height within overlay card */
-            .overlay-card .h-\[500px\] {
-                height: 300px;
-            }
+        body.dark .chat-container {
+            background-color: #2c2c44;
+            border-color: #4f4f6a;
+        }
+
+        .message-bubble {
+            padding: 0.75rem;
+            border-radius: 0.75rem;
+            max-width: 80%;
+        }
 
         .received-message {
             background-color: #e5e7eb;
             color: #1f2937;
+            border-bottom-left-radius: 0.25rem;
             align-self: flex-start;
-            border-radius: 0.75rem 0.75rem 0.75rem 0.25rem;
+        }
+
+        body.dark .received-message {
+            background-color: #4f4f6a;
+            color: #e0e0e0;
         }
 
         .sent-message {
             background-color: #2563eb;
             color: #ffffff;
+            border-bottom-right-radius: 0.25rem;
             align-self: flex-end;
-            border-radius: 0.75rem 0.75rem 0.25rem 0.75rem;
+        }
+
+        /* Modal specific styles */
+        .modal {
+            display: none; /* Hidden by default */
+            position: fixed;
+            z-index: 50;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            padding: 2rem;
+            border-radius: 1rem;
+            max-width: 90%;
+            width: 500px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        body.dark .modal-content {
+            background-color: #1a1a2e;
+            color: #e0e0e0;
         }
     </style>
 </head>
-<body class="flex">
-
-    <div class="sidebar">
-        <div class="text-center mb-8">
-            <div class="w-full mb-4 flex justify-center">
-                <img src="images/logo.jfif" alt="MediPortal Logo" class="w-32 h-32 object-contain">
-            </div>
-            <h1 class="text-xl font-bold text-gray-800">MediPortal</h1>
+<body class="bg-gray-100 flex h-screen overflow-hidden">
+    <!-- Sidebar -->
+    <div class="w-64 bg-white shadow-xl flex flex-col items-center p-6 border-r border-gray-200 dark:bg-gray-800 dark:border-gray-700 transition-colors">
+        <div class="mb-8">
+            <img src="https://placehold.co/120x60/d4f0fa/000?text=Kijabe+Hospital" alt="Hospital Logo" class="rounded-lg">
         </div>
-
         <div class="flex flex-col items-center mb-10">
-            <div class="w-24 h-24 rounded-full overflow-hidden mb-4 border-2 border-blue-500 shadow-md">
-                <img src="https://placehold.co/96x96/60a5fa/fff?text=User" alt="User Avatar" class="w-full h-full object-cover">
+            <div class="w-24 h-24 bg-blue-500 rounded-full flex items-center justify-center text-white text-4xl font-bold mb-2">
+                U
             </div>
-            <p class="text-lg font-semibold text-gray-800">Jane Doe</p>
-            <p class="text-sm text-gray-500">Doctor</p>
+            <p class="text-lg font-semibold text-gray-800 dark:text-gray-200">Jane Doe</p>
+            <p class="text-sm text-gray-500 dark:text-gray-400">Doctor</p>
         </div>
-
-        <nav class="w-full">
-            <a href="#" class="flex items-center space-x-3 p-3 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors duration-200 mb-2">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+        <nav class="w-full flex flex-col space-y-2">
+            <!-- Updated links to use IDs for navigation -->
+            <button id="dashboard-link" class="flex items-center space-x-3 p-3 rounded-lg text-blue-600 bg-blue-50 font-medium dark:text-blue-400 dark:bg-blue-900 transition-colors">
+                <i class="fas fa-chart-line w-5"></i>
                 <span>Dashboard</span>
-            </a>
-            <a href="#" class="flex items-center space-x-3 p-3 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors duration-200 mb-2">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm-6-2a6 6 0 00-6-6v12h12v-12a6 6 0 00-6-6z"></path></svg>
+            </button>
+            <button id="patients-link" class="flex items-center space-x-3 p-3 rounded-lg text-gray-600 hover:bg-gray-200 transition-colors dark:text-gray-400 dark:hover:bg-gray-700">
+                <i class="fas fa-user-injured w-5"></i>
                 <span>Patients</span>
-            </a>
-            <a href="#" class="flex items-center space-x-3 p-3 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors duration-200 mb-2">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17.25a.75.75 0 01.75-.75h.5a.75.75 0 01.75.75v1.5a.75.75 0 01-.75.75h-.5a.75.75 0 01-.75-.75v-1.5zM15 17.25a.75.75 0 01.75-.75h.5a.75.75 0 01.75.75v1.5a.75.75 0 01-.75.75h-.5a.75.75 0 01-.75-.75v-1.5zM12 10.5h.008v.008H12V10.5z"></path></svg>
+            </button>
+            <button id="reports-link" class="flex items-center space-x-3 p-3 rounded-lg text-gray-600 hover:bg-gray-200 transition-colors dark:text-gray-400 dark:hover:bg-gray-700">
+                <i class="fas fa-file-medical-alt w-5"></i>
                 <span>Reports</span>
-            </a>
-            <a href="#" class="flex items-center space-x-3 p-3 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors duration-200 mb-2">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.525.27.994.488 1.518.666z"></path></svg>
+            </button>
+            <button id="settings-link" class="flex items-center space-x-3 p-3 rounded-lg text-gray-600 hover:bg-gray-200 transition-colors dark:text-gray-400 dark:hover:bg-gray-700">
+                <i class="fas fa-cog w-5"></i>
                 <span>Settings</span>
-            </a>
+            </button>
         </nav>
-
-        <div class="mt-auto w-full">
-            <a href="#" class="flex items-center justify-center p-3 rounded-lg text-white bg-blue-600 hover:bg-blue-700 transition-colors duration-200">
-                <span>Logout</span>
-            </a>
-        </div>
     </div>
 
-    <div class="main-content">
-        <div class="image-overlay-container">
-            <div class="overlay-content">
-                <div class="overlay-card">
-                    <h3 class="text-xl font-bold text-gray-900 mb-4">Services List</h3>
-                    <div class="space-y-4">
-                        <div class="p-4 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors duration-200" data-patient-id="patient@1">
-                            <p class="font-medium text-gray-800">Cardiology</p>
-                        </div>
-                        <div class="p-4 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors duration-200" data-patient-id="patient-2">
-                            <p class="font-medium text-gray-800">Orthopedics</p>
-                        </div>
-                        <div class="p-4 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors duration-200" data-patient-id="patient-3">
-                            <p class="font-medium text-gray-800">Dermatology</p>
-                        </div>
-                        <div class="p-4 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors duration-200" data-patient-id="patient-4">
-                            <p class="font-medium text-gray-800">Pediatrics</p>
-                        </div>
-                        <div class="p-4 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors duration-200" data-patient-id="patient-5">
-                            <p class="font-medium text-gray-800">General Surgery</p>
-                        </div>
-                        <div class="p-4 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors duration-200" data-patient-id="patient-6">
-                            <p class="font-medium text-gray-800">Neurology</p>
-                        </div>
+    <!-- Main Content Area -->
+    <div class="flex-1 flex flex-col p-6 overflow-y-auto">
+
+        <!-- Main Dashboard View -->
+        <div id="dashboard-view">
+            <!-- Header -->
+            <header class="bg-white rounded-xl shadow-sm mb-6 p-4 flex items-center justify-between dark:bg-gray-800">
+                <h1 class="text-3xl font-bold text-gray-800 dark:text-gray-200">Dashboard Overview</h1>
+                <div class="flex items-center space-x-4">
+                    <button class="text-gray-400 hover:text-gray-600 transition-colors">
+                        <i class="fas fa-bell"></i>
+                    </button>
+                    <div class="h-10 w-10 bg-gray-300 rounded-full dark:bg-gray-600"></div>
+                </div>
+            </header>
+
+            <!-- Main Dashboard Content -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                <div class="bg-white rounded-xl shadow-md p-6 flex flex-col items-center dark:bg-gray-800">
+                    <h2 class="text-lg font-medium text-gray-500 mb-2 dark:text-gray-400">Total Patients</h2>
+                    <p class="text-4xl font-bold text-blue-600 dark:text-blue-400">4,120</p>
+                </div>
+                <div class="bg-white rounded-xl shadow-md p-6 flex flex-col items-center dark:bg-gray-800">
+                    <h2 class="text-lg font-medium text-gray-500 mb-2 dark:text-gray-400">Upcoming Appointments</h2>
+                    <p class="text-4xl font-bold text-orange-500">25</p>
+                </div>
+                <div class="bg-white rounded-xl shadow-md p-6 flex flex-col items-center dark:bg-gray-800">
+                    <h2 class="text-lg font-medium text-gray-500 mb-2 dark:text-gray-400">New Messages</h2>
+                    <p class="text-4xl font-bold text-green-600">7</p>
+                </div>
+            </div>
+
+            <!-- Chat and Other Sections -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 flex-1">
+                <!-- Specialties/Sections -->
+                <div class="bg-white rounded-xl shadow-md p-6 dark:bg-gray-800">
+                    <h2 class="text-xl font-bold text-gray-800 mb-4 dark:text-gray-200">Doctor's Services</h2>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="bg-gray-100 rounded-lg p-4 font-medium text-gray-700 dark:bg-gray-700 dark:text-gray-300">Cardiology</div>
+                        <div class="bg-gray-100 rounded-lg p-4 font-medium text-gray-700 dark:bg-gray-700 dark:text-gray-300">Orthopedics</div>
+                        <div class="bg-gray-100 rounded-lg p-4 font-medium text-gray-700 dark:bg-gray-700 dark:text-gray-300">Dermatology</div>
+                        <div class="bg-gray-100 rounded-lg p-4 font-medium text-gray-700 dark:bg-gray-700 dark:text-gray-300">Pediatrics</div>
+                        <div class="bg-gray-100 rounded-lg p-4 font-medium text-gray-700 dark:bg-gray-700 dark:text-gray-300">General Surgery</div>
                     </div>
                 </div>
 
-                <div class="overlay-card flex-col h-[500px]">
-                    <div class="flex-1 overflow-y-auto mb-4 border border-gray-200 rounded-lg p-4 bg-gray-50 flex flex-col space-y-2" id="chat-messages-container">
-                        <p class="text-sm text-gray-600">Select a patient to begin a consultation.</p>
+                <!-- Chat Section -->
+                <div class="bg-white rounded-xl shadow-md p-6 flex flex-col dark:bg-gray-800">
+                    <h2 class="text-xl font-bold text-gray-800 mb-4 dark:text-gray-200">Chat with Patients</h2>
+                    <div id="chat-message-list" class="chat-container">
+                        <!-- Chat messages will be appended here -->
                     </div>
-                    <form id="chat-form" class="flex items-center space-x-3">
-                        <input type="text" id="chat-input" placeholder="Type a message..." class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        <button type="submit" class="px-6 py-2 rounded-lg text-white bg-blue-600 hover:bg-blue-700 transition-colors duration-200">
-                            Send
-                        </button>
+                    <form id="chat-form" class="flex space-x-2">
+                        <input type="text" id="chat-message-input" placeholder="Type your message..." class="flex-1 p-3 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 transition-colors dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
+                        <button type="submit" id="send-button" class="bg-blue-600 text-white p-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors">Send</button>
                     </form>
                 </div>
             </div>
         </div>
 
-        <hr>
+        <!-- Patient Database View (initially hidden) -->
+        <div id="patients-view" class="hidden">
+            <!-- Header -->
+            <header class="bg-white rounded-xl shadow-sm mb-6 p-4 flex items-center justify-between dark:bg-gray-800">
+                <h1 class="text-3xl font-bold text-gray-800 dark:text-gray-200">Patient Database</h1>
+                <div class="flex items-center space-x-4">
+                    <button class="text-gray-400 hover:text-gray-600 transition-colors">
+                        <i class="fas fa-bell"></i>
+                    </button>
+                    <div class="h-10 w-10 bg-gray-300 rounded-full dark:bg-gray-600"></div>
+                </div>
+            </header>
 
-        <h2 class="text-2xl font-bold text-gray-900">Dashboard Overview</h2>
+            <!-- Patient List Section -->
+            <div class="bg-white rounded-xl shadow-md p-6 dark:bg-gray-800">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-bold text-gray-800 dark:text-gray-200">My Patients</h2>
+                    <div class="flex items-center space-x-4">
+                        <button id="add-patient-btn" class="bg-green-600 text-white p-3 rounded-lg font-semibold hover:bg-green-700 transition-colors">
+                            <i class="fas fa-plus mr-2"></i> Add New Patient
+                        </button>
+                        <div class="relative">
+                            <input type="text" placeholder="Search patients..." class="pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
+                            <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                        </div>
+                    </div>
+                </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div class="bg-white rounded-xl shadow-lg p-6">
-                <h4 class="text-sm font-medium text-gray-500 mb-2">Total Patients</h4>
-                <div class="text-3xl font-bold text-blue-600">4,120</div>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                        <thead class="bg-gray-50 dark:bg-gray-700">
+                            <tr>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">Patient Name</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">Patient ID</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">Condition</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">Last Visit</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="patients-table-body" class="bg-white divide-y divide-gray-200 dark:bg-gray-800 dark:divide-gray-700">
+                            <!-- Patient Rows will be injected by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
             </div>
+        </div>
 
-            <div class="bg-white rounded-xl shadow-lg p-6">
-                <h4 class="text-sm font-medium text-gray-500 mb-2">Upcoming Appointments</h4>
-                <div class="text-3xl font-bold text-orange-500">25</div>
+        <!-- Reports View (initially hidden) -->
+        <div id="reports-view" class="hidden">
+            <!-- Header -->
+            <header class="bg-white rounded-xl shadow-sm mb-6 p-4 flex items-center justify-between dark:bg-gray-800">
+                <h1 class="text-3xl font-bold text-gray-800 dark:text-gray-200">Practice Reports</h1>
+                <div class="flex items-center space-x-4">
+                    <button class="text-gray-400 hover:text-gray-600 transition-colors">
+                        <i class="fas fa-bell"></i>
+                    </button>
+                    <div class="h-10 w-10 bg-gray-300 rounded-full dark:bg-gray-600"></div>
+                </div>
+            </header>
+
+            <div class="bg-white rounded-xl shadow-md p-6 space-y-8 dark:bg-gray-800">
+                <!-- Key Metrics -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div class="bg-gray-50 rounded-xl p-6 text-center shadow-sm dark:bg-gray-700">
+                        <h2 class="text-lg font-medium text-gray-500 mb-2 dark:text-gray-400">Total Patients Seen</h2>
+                        <p class="text-4xl font-bold text-blue-600 dark:text-blue-400">4,120</p>
+                    </div>
+                    <div class="bg-gray-50 rounded-xl p-6 text-center shadow-sm dark:bg-gray-700">
+                        <h2 class="text-lg font-medium text-gray-500 mb-2 dark:text-gray-400">Treatment Success Rate</h2>
+                        <p class="text-4xl font-bold text-green-600">85%</p>
+                    </div>
+                    <div class="bg-gray-50 rounded-xl p-6 text-center shadow-sm dark:bg-gray-700">
+                        <h2 class="text-lg font-medium text-gray-500 mb-2 dark:text-gray-400">Average Visit Time</h2>
+                        <p class="text-4xl font-bold text-orange-500">22 min</p>
+                    </div>
+                </div>
+
+                <hr class="border-gray-200 dark:border-gray-700">
+
+                <!-- Charts -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="bg-white rounded-xl p-6 shadow-sm dark:bg-gray-800">
+                        <h2 class="text-xl font-bold text-gray-800 mb-4 dark:text-gray-200">Common Conditions</h2>
+                        <div class="w-full h-80">
+                            <canvas id="conditions-chart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-xl p-6 shadow-sm dark:bg-gray-800">
+                        <h2 class="text-xl font-bold text-gray-800 mb-4 dark:text-gray-200">Treatment Outcomes</h2>
+                        <div class="w-full h-80 flex items-center justify-center">
+                            <div class="w-2/3 h-full">
+                                <canvas id="success-rate-chart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <hr class="border-gray-200 dark:border-gray-700">
+
+                <!-- Patient Report Section -->
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200 dark:bg-gray-800 dark:border-gray-700">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-4 dark:text-gray-200">Patient Report</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                        <div>
+                            <p><span class="font-semibold text-gray-700 dark:text-gray-300">Patient Name:</span> Jane Smith</p>
+                            <p><span class="font-semibold text-gray-700 dark:text-gray-300">Patient ID:</span> P-78901</p>
+                        </div>
+                        <div class="text-left md:text-right">
+                            <p><span class="font-semibold text-gray-700 dark:text-gray-300">Report Date:</span> 2024-09-15</p>
+                            <p><span class="font-semibold text-gray-700 dark:text-gray-300">Doctor:</span> Dr. Jane Doe</p>
+                        </div>
+                    </div>
+
+                    <div class="space-y-6">
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-800 border-b-2 border-blue-500 pb-1 dark:text-gray-200">Medical History</h3>
+                            <ul class="list-disc list-inside mt-2 text-gray-700 space-y-1 dark:text-gray-300">
+                                <li>Allergies: Penicillin</li>
+                                <li>Pre-existing Conditions: Mild hypertension (controlled)</li>
+                                <li>Family History: Paternal side with history of diabetes</li>
+                            </ul>
+                        </div>
+
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-800 border-b-2 border-blue-500 pb-1 dark:text-gray-200">Diagnosis</h3>
+                            <p class="mt-2 text-gray-700 italic dark:text-gray-300">"The patient presented with symptoms consistent with seasonal allergies, including persistent sneezing, nasal congestion, and watery eyes."</p>
+                        </div>
+
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-800 border-b-2 border-blue-500 pb-1 dark:text-gray-200">Treatment Plan</h3>
+                            <ul class="list-disc list-inside mt-2 text-gray-700 space-y-1 dark:text-gray-300">
+                                <li>Prescribed over-the-counter antihistamine.</li>
+                                <li>Recommended regular saline nasal rinses.</li>
+                                <li>Advised to avoid known allergens and maintain a clean indoor environment.</li>
+                                <li>Follow-up appointment scheduled in 2 weeks.</li>
+                            </ul>
+                        </div>
+
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-800 border-b-2 border-blue-500 pb-1 dark:text-gray-200">Notes</h3>
+                            <p class="mt-2 text-gray-700 dark:text-gray-300">Patient was cooperative and responsive to treatment suggestions. No other significant findings during the visit. The prognosis is excellent with proper management.</p>
+                        </div>
+                    </div>
+                </div>
             </div>
+        </div>
 
-            <div class="bg-white rounded-xl shadow-lg p-6">
-                <h4 class="text-sm font-medium text-gray-500 mb-2">New Messages</h4>
-                <div class="text-3xl font-bold text-green-600">7</div>
+        <!-- Settings View (initially hidden) -->
+        <div id="settings-view" class="hidden">
+            <!-- Header -->
+            <header class="bg-white rounded-xl shadow-sm mb-6 p-4 flex items-center justify-between dark:bg-gray-800">
+                <h1 class="text-3xl font-bold text-gray-800 dark:text-gray-200">Settings</h1>
+                <div class="flex items-center space-x-4">
+                    <button class="text-gray-400 hover:text-gray-600 transition-colors">
+                        <i class="fas fa-bell"></i>
+                    </button>
+                    <div class="h-10 w-10 bg-gray-300 rounded-full dark:bg-gray-600"></div>
+                </div>
+            </header>
+
+            <div class="bg-white rounded-xl shadow-md p-6 space-y-8 dark:bg-gray-800">
+                <!-- Profile Settings -->
+                <div class="border-b border-gray-200 pb-6 dark:border-gray-700">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-4 dark:text-gray-200">Profile</h2>
+                    <div class="flex flex-col md:flex-row items-center space-y-4 md:space-y-0 md:space-x-8">
+                        <div class="flex-shrink-0">
+                            <div class="w-24 h-24 bg-blue-500 rounded-full flex items-center justify-center text-white text-4xl font-bold">U</div>
+                        </div>
+                        <div class="flex-1 w-full space-y-4">
+                            <div>
+                                <label for="profile-name" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Full Name</label>
+                                <input type="text" id="profile-name" value="Jane Doe" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
+                            </div>
+                            <div>
+                                <label for="profile-title" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Title</label>
+                                <input type="text" id="profile-title" value="Doctor" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
+                            </div>
+                            <button class="bg-blue-600 text-white p-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors">Save Profile</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Notification Settings -->
+                <div class="border-b border-gray-200 pb-6 dark:border-gray-700">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-4 dark:text-gray-200">Notifications</h2>
+                    <div class="space-y-4">
+                        <div class="flex items-center">
+                            <input id="new-messages-notif" type="checkbox" checked class="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:ring-offset-gray-800">
+                            <label for="new-messages-notif" class="ml-2 block text-gray-700 dark:text-gray-300">
+                                New messages from patients
+                            </label>
+                        </div>
+                        <div class="flex items-center">
+                            <input id="upcoming-appointments-notif" type="checkbox" checked class="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:ring-offset-gray-800">
+                            <label for="upcoming-appointments-notif" class="ml-2 block text-gray-700 dark:text-gray-300">
+                                Upcoming appointments
+                            </label>
+                        </div>
+                        <div class="flex items-center">
+                            <input id="patient-report-updates" type="checkbox" class="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:ring-offset-gray-800">
+                            <label for="patient-report-updates" class="ml-2 block text-gray-700 dark:text-gray-300">
+                                Patient report updates
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Appearance Settings -->
+                <div>
+                    <h2 class="text-2xl font-bold text-gray-800 mb-4 dark:text-gray-200">Appearance</h2>
+                    <div class="flex items-center space-x-4">
+                        <span class="text-gray-700 dark:text-gray-300">Theme:</span>
+                        <div class="flex items-center space-x-2">
+                            <i class="fas fa-sun text-yellow-500"></i>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="theme-toggle" class="sr-only peer">
+                                <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                            </label>
+                            <i class="fas fa-moon text-gray-400"></i>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
+    <!-- Patient Details Modal (initially hidden) -->
+    <div id="patient-details-modal" class="modal">
+        <div class="modal-content dark:bg-gray-800">
+            <div class="flex justify-between items-center pb-3 border-b border-gray-200 dark:border-gray-700">
+                <h3 class="text-xl font-bold text-gray-800 dark:text-gray-200" id="patient-details-name"></h3>
+                <button class="text-gray-400 hover:text-gray-600 close-modal-btn">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="pt-4">
+                <p><span class="font-semibold text-gray-700 dark:text-gray-300">Patient ID:</span> <span id="patient-details-id"></span></p>
+                <p><span class="font-semibold text-gray-700 dark:text-gray-300">Condition:</span> <span id="patient-details-condition"></span></p>
+                <p><span class="font-semibold text-gray-700 dark:text-gray-300">Last Visit:</span> <span id="patient-details-last-visit"></span></p>
+                <p><span class="font-semibold text-gray-700 dark:text-gray-300">Contact:</span> <span id="patient-details-contact"></span></p>
+                <p class="mt-4 text-gray-700 dark:text-gray-300" id="patient-details-notes"></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Patient Modal (initially hidden) -->
+    <div id="add-patient-modal" class="modal">
+        <div class="modal-content dark:bg-gray-800">
+            <div class="flex justify-between items-center pb-3 border-b border-gray-200 dark:border-gray-700">
+                <h3 class="text-xl font-bold text-gray-800 dark:text-gray-200">Add New Patient</h3>
+                <button class="text-gray-400 hover:text-gray-600 close-modal-btn">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="pt-4">
+                <form id="add-patient-form" class="space-y-4">
+                    <div>
+                        <label for="patient-name" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Patient Name</label>
+                        <input type="text" id="patient-name" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
+                    </div>
+                    <div>
+                        <label for="patient-id" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Patient ID</label>
+                        <input type="text" id="patient-id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
+                    </div>
+                    <div>
+                        <label for="patient-condition" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Condition</label>
+                        <input type="text" id="patient-condition" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
+                    </div>
+                    <div>
+                        <label for="patient-contact" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Contact</label>
+                        <input type="tel" id="patient-contact" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
+                    </div>
+                    <div>
+                        <label for="patient-notes" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Notes</label>
+                        <textarea id="patient-notes" rows="4" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"></textarea>
+                    </div>
+                    <div class="flex justify-end pt-4">
+                        <button type="submit" class="bg-blue-600 text-white p-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors">Add Patient</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- SignalR Script -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
     <script>
-        let connection = null;
-        let currentUser = 'doctor@1'; // The doctor's unique ID
-        let currentRecipient = null;
-        const chatMessagesContainer = document.getElementById('chat-messages-container');
         const chatForm = document.getElementById('chat-form');
-        const chatInput = document.getElementById('chat-input');
+        const messageInput = document.getElementById('chat-message-input');
+        const messageList = document.getElementById('chat-message-list');
+        const currentUser = "Jane Doe";
+        const currentRecipient = "John Smith";
+
+        const connection = new signalR.HubConnectionBuilder()
+            .withUrl("/chathub")
+            .withAutomaticReconnect()
+            .build();
+
+        connection.on("ReceiveMessage", (receivedUser, receivedMessage) => {
+            if (receivedUser === currentRecipient || receivedUser === "System" || receivedUser === currentUser) {
+                const isSelf = receivedUser === currentUser;
+                const messageWrapper = document.createElement('div');
+                messageWrapper.className = `flex ${isSelf ? 'justify-end' : 'justify-start'} w-full`;
+
+                const messageElement = document.createElement('div');
+                messageElement.className = `message-bubble ${isSelf ? 'sent-message' : 'received-message'}`;
+                messageElement.innerHTML = `<span class="block font-bold">${receivedUser}:</span> ${receivedMessage}`;
+
+                messageWrapper.appendChild(messageElement);
+                messageList.appendChild(messageWrapper);
+                messageList.scrollTop = messageList.scrollHeight;
+            }
+        });
 
         async function startConnection() {
-            connection = new signalR.HubConnectionBuilder()
-                .withUrl("/chathub")
-                .withAutomaticReconnect()
-                .build();
-
-            connection.on("ReceiveMessage", (sender, message) => {
-                if (sender === currentRecipient) {
-                    appendMessage(sender, message);
-                }
-            });
-
             try {
                 await connection.start();
                 console.log("SignalR Connected! Doctor is online.");
                 await connection.invoke("JoinChat", currentUser);
             } catch (err) {
-                console.error("SignalR Connection Error: ", err);
+                console.log("SignalR Connection Error: ", err);
+                setTimeout(startConnection, 5000);
             }
         }
+
+        chatForm.addEventListener("submit", async (event) => {
+            event.preventDefault();
+            const message = messageInput.value.trim();
+            if (message) {
+                await connection.invoke("SendMessage", currentUser, currentRecipient, message).catch(err => console.error(err.toString()));
+                appendMessage(currentUser, message);
+                messageInput.value = "";
+            }
+        });
 
         function appendMessage(sender, message) {
-            const isMyMessage = sender === currentUser;
+            const isSelf = sender === currentUser;
+            const messageWrapper = document.createElement('div');
+            messageWrapper.className = `flex ${isSelf ? 'justify-end' : 'justify-start'} w-full`;
+
             const messageElement = document.createElement('div');
-            messageElement.className = `p-3 my-1 rounded-lg max-w-[80%] break-words ${isMyMessage ? 'sent-message self-end' : 'received-message self-start'}`;
-            messageElement.innerHTML = `<p class="text-sm">${message}</p>`;
-            chatMessagesContainer.appendChild(messageElement);
-            chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
+            messageElement.className = `message-bubble ${isSelf ? 'sent-message' : 'received-message'}`;
+            messageElement.innerHTML = `<span class="block font-bold">${sender}:</span> ${message}`;
+
+            messageWrapper.appendChild(messageElement);
+            messageList.appendChild(messageWrapper);
+            messageList.scrollTop = messageList.scrollHeight;
         }
 
-        chatForm.addEventListener('submit', async (event) => {
-            event.preventDefault();
-            const message = chatInput.value;
-            if (connection && connection.state === signalR.HubConnectionState.Connected && message && currentRecipient) {
-                try {
-                    await connection.invoke("SendMessage", currentUser, currentRecipient, message);
-                    appendMessage(currentUser, message);
-                    chatInput.value = '';
-                } catch (err) {
-                    console.error("SendMessage Error: ", err);
-                }
-            } else {
-                console.log("Please select a patient to chat with.");
-            }
-        });
+        window.addEventListener('load', startConnection);
 
-        document.querySelectorAll('.overlay-card .space-y-4 > div').forEach(item => {
-            item.addEventListener('click', (event) => {
-                const patientId = event.currentTarget.dataset.patientId;
-                if (patientId) {
-                    currentRecipient = patientId;
-                    chatMessagesContainer.innerHTML = '';
-                    appendMessage("System", `You are now chatting with ${patientId}.`);
+        // Sample patient data (this will eventually come from the C# backend)
+        const patients = [
+            { id: 'P-12345', name: 'John Smith', condition: 'Asthma', lastVisit: '2024-09-10', contact: '555-123-4567', notes: 'Chronic asthma with recent flare-ups. Needs follow-up on medication adherence.' },
+            { id: 'P-12346', name: 'Jane Doe', condition: 'Hypertension', lastVisit: '2024-08-25', contact: '555-987-6543', notes: 'Regular blood pressure monitoring. Advised on lifestyle changes.' },
+            { id: 'P-12347', name: 'Peter Jones', condition: 'Common Cold', lastVisit: '2024-09-14', contact: '555-234-5678', notes: 'Prescribed rest and hydration. Symptom check in one week.' },
+            { id: 'P-12348', name: 'Alice Williams', condition: 'Diabetes', lastVisit: '2024-09-01', contact: '555-111-2222', notes: 'Type 2 diabetes management. Discussed diet and exercise plan.' },
+            { id: 'P-12349', name: 'Michael Brown', condition: 'Back Pain', lastVisit: '2024-09-05', contact: '555-333-4444', notes: 'Referred to physical therapy. Follow-up in 4 weeks.' },
+        ];
+
+        // Sample data for charts
+        const conditionsData = {
+            labels: ['Asthma', 'Hypertension', 'Diabetes', 'Common Cold', 'Back Pain'],
+            datasets: [{
+                label: 'Number of Patients',
+                data: [15, 12, 10, 8, 7],
+                backgroundColor: [
+                    '#3b82f6', // blue-500
+                    '#22c55e', // green-500
+                    '#ef4444', // red-500
+                    '#f97316', // orange-500
+                    '#6366f1'  // indigo-500
+                ],
+                borderColor: '#ffffff',
+                borderWidth: 1
+            }]
+        };
+
+        const successRateData = {
+            labels: ['Success', 'Ongoing'],
+            datasets: [{
+                label: 'Treatment Status',
+                data: [85, 15], // 85% success, 15% ongoing
+                backgroundColor: [
+                    '#22c55e', // green-500
+                    '#f97316'  // orange-500
+                ],
+                hoverOffset: 4
+            }]
+        };
+
+        // JavaScript to handle views and modals
+        document.addEventListener('DOMContentLoaded', () => {
+            const dashboardView = document.getElementById('dashboard-view');
+            const patientsView = document.getElementById('patients-view');
+            const reportsView = document.getElementById('reports-view');
+            const settingsView = document.getElementById('settings-view');
+
+            const dashboardLink = document.getElementById('dashboard-link');
+            const patientsLink = document.getElementById('patients-link');
+            const reportsLink = document.getElementById('reports-link');
+            const settingsLink = document.getElementById('settings-link');
+
+            const patientDetailsModal = document.getElementById('patient-details-modal');
+            const addPatientModal = document.getElementById('add-patient-modal');
+            const addPatientBtn = document.getElementById('add-patient-btn');
+            const closeButtons = document.querySelectorAll('.close-modal-btn');
+
+            const patientsTableBody = document.getElementById('patients-table-body');
+            const addPatientForm = document.getElementById('add-patient-form');
+
+            const themeToggle = document.getElementById('theme-toggle');
+
+            // Chart instances
+            let conditionsChart, successRateChart;
+
+            function showView(viewToShow) {
+                dashboardView.classList.add('hidden');
+                patientsView.classList.add('hidden');
+                reportsView.classList.add('hidden');
+                settingsView.classList.add('hidden');
+                viewToShow.classList.remove('hidden');
+            }
+
+            function setActiveLink(activeLink) {
+                const links = [dashboardLink, patientsLink, reportsLink, settingsLink];
+                links.forEach(link => {
+                    link.classList.remove('text-blue-600', 'bg-blue-50', 'font-medium', 'dark:text-blue-400', 'dark:bg-blue-900');
+                    link.classList.add('text-gray-600', 'hover:bg-gray-200', 'dark:text-gray-400', 'dark:hover:bg-gray-700');
+                });
+
+                activeLink.classList.add('text-blue-600', 'bg-blue-50', 'font-medium', 'dark:text-blue-400', 'dark:bg-blue-900');
+                activeLink.classList.remove('text-gray-600', 'hover:bg-gray-200', 'dark:text-gray-400', 'dark:hover:bg-gray-700');
+            }
+
+            // Function to render the patient table
+            function renderPatients() {
+                patientsTableBody.innerHTML = '';
+                patients.forEach(patient => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">${patient.name}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">${patient.id}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">${patient.condition}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">${patient.lastVisit}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                <a href="#" class="view-patient-link text-blue-600 hover:text-blue-900" data-patient-id="${patient.id}">View</a>
+                            </td>
+                        `;
+                    patientsTableBody.appendChild(row);
+                });
+            }
+
+            // Function to initialize charts
+            function initCharts() {
+                // Destroy previous instances to prevent duplicates
+                if (conditionsChart) conditionsChart.destroy();
+                if (successRateChart) successRateChart.destroy();
+
+                const conditionsCtx = document.getElementById('conditions-chart').getContext('2d');
+                conditionsChart = new Chart(conditionsCtx, {
+                    type: 'bar',
+                    data: conditionsData,
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        animation: false, // Disable chart animation
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            title: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+
+                const successRateCtx = document.getElementById('success-rate-chart').getContext('2d');
+                successRateChart = new Chart(successRateCtx, {
+                    type: 'doughnut',
+                    data: successRateData,
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        animation: false, // Disable chart animation
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                                labels: {
+                                    color: document.body.classList.contains('dark') ? '#e0e0e0' : '#1f2937'
+                                }
+                            },
+                            title: {
+                                display: false
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Event listener for view patient links
+            patientsTableBody.addEventListener('click', (e) => {
+                if (e.target.classList.contains('view-patient-link')) {
+                    e.preventDefault();
+                    const patientId = e.target.getAttribute('data-patient-id');
+                    const patient = patients.find(p => p.id === patientId);
+                    if (patient) {
+                        document.getElementById('patient-details-name').textContent = patient.name;
+                        document.getElementById('patient-details-id').textContent = patient.id;
+                        document.getElementById('patient-details-condition').textContent = patient.condition;
+                        document.getElementById('patient-details-last-visit').textContent = patient.lastVisit;
+                        document.getElementById('patient-details-contact').textContent = patient.contact;
+                        document.getElementById('patient-details-notes').textContent = patient.notes;
+                        patientDetailsModal.style.display = 'flex';
+                    }
                 }
             });
-        });
 
-        document.addEventListener('DOMContentLoaded', startConnection);
+            // Event listener to open "Add Patient" modal
+            addPatientBtn.addEventListener('click', () => {
+                addPatientModal.style.display = 'flex';
+            });
+
+            // Event listener for closing modals
+            closeButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    patientDetailsModal.style.display = 'none';
+                    addPatientModal.style.display = 'none';
+                });
+            });
+
+            // Handle adding a new patient (for now, this just adds to the front-end array)
+            addPatientForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const newPatient = {
+                    id: document.getElementById('patient-id').value,
+                    name: document.getElementById('patient-name').value,
+                    condition: document.getElementById('patient-condition').value,
+                    lastVisit: new Date().toISOString().slice(0, 10),
+                    contact: document.getElementById('patient-contact').value,
+                    notes: document.getElementById('patient-notes').value
+                };
+                patients.push(newPatient);
+                renderPatients();
+                addPatientForm.reset();
+                addPatientModal.style.display = 'none';
+            });
+
+
+            // Event listeners for the sidebar links
+            dashboardLink.addEventListener('click', () => {
+                showView(dashboardView);
+                setActiveLink(dashboardLink);
+            });
+
+            patientsLink.addEventListener('click', () => {
+                showView(patientsView);
+                setActiveLink(patientsLink);
+                renderPatients();
+            });
+
+            reportsLink.addEventListener('click', () => {
+                showView(reportsView);
+                setActiveLink(reportsLink);
+                initCharts(); // Initialize charts when reports view is shown
+            });
+
+            settingsLink.addEventListener('click', () => {
+                showView(settingsView);
+                setActiveLink(settingsLink);
+            });
+
+            // Theme toggle logic
+            const currentTheme = localStorage.getItem('theme');
+            if (currentTheme === 'dark') {
+                document.body.classList.add('dark');
+                themeToggle.checked = true;
+            }
+
+            themeToggle.addEventListener('change', () => {
+                if (themeToggle.checked) {
+                    document.body.classList.add('dark');
+                    localStorage.setItem('theme', 'dark');
+                } else {
+                    document.body.classList.remove('dark');
+                    localStorage.setItem('theme', 'light');
+                }
+            });
+
+            // Initial view
+            showView(dashboardView);
+            setActiveLink(dashboardLink);
+            renderPatients();
+        });
     </script>
 </body>
 </html>

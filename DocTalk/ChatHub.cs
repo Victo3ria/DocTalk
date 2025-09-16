@@ -1,26 +1,43 @@
-﻿// This file defines the SignalR hub for our chat application.
-// A hub is the main class that a client connects to.
-
-using Microsoft.AspNetCore.SignalR;
+﻿using Microsoft.AspNetCore.SignalR;
 using System.Threading.Tasks;
+using System.Collections.Concurrent;
 
-// Inherit from the Hub base class to create a new hub.
-// The hub is used to handle real-time communication.
+// This class defines the server-side hub for real-time communication.
 public class ChatHub : Hub
 {
-    /// <summary>
-    /// Sends a message to all connected clients.
-    /// This method can be called from a client.
-    /// </summary>
-    /// <param name="user">The name of the user sending the message.</param>
-    /// <param name="message">The message content.</param>
-    /// <returns>A task representing the asynchronous operation.</returns>
-    public async Task SendMessage(string user, string message)
+    // A thread-safe dictionary to map a user's ID to their connection ID.
+    private static ConcurrentDictionary<string, string> connectedUsers = new ConcurrentDictionary<string, string>();
+
+    // This method is called by a client when they first connect.
+    public async Task JoinChat(string userId)
     {
-        // The 'Clients.All' property targets all connected clients.
-        // The 'SendAsync' method invokes a method on the client side.
-        // The first parameter, "ReceiveMessage", is the name of the client-side function to call.
-        // The following parameters are the arguments for that function.
-        await Clients.All.SendAsync("ReceiveMessage", user, message);
+        // Add the user to our dictionary.
+        connectedUsers.AddOrUpdate(userId, Context.ConnectionId, (key, oldValue) => Context.ConnectionId);
+
+        // Notify the user that they are connected.
+        await Clients.Client(Context.ConnectionId).SendAsync("ReceiveMessage", "System", $"You are now connected, {userId}.");
+    }
+
+    // This method is called by a client to send a message to a specific user.
+    public async Task SendMessage(string senderId, string recipientId, string message)
+    {
+        // Look up the recipient's connection ID from our dictionary.
+        if (connectedUsers.TryGetValue(recipientId, out string recipientConnectionId))
+        {
+            // Send the message to the specific recipient.
+            await Clients.Client(recipientConnectionId).SendAsync("ReceiveMessage", senderId, message);
+        }
+    }
+
+    // This method is called when a client disconnects.
+    public override async Task OnDisconnectedAsync(Exception exception)
+    {
+        // Remove the user from our dictionary when they disconnect.
+        var user = connectedUsers.FirstOrDefault(x => x.Value == Context.ConnectionId).Key;
+        if (user != null)
+        {
+            connectedUsers.TryRemove(user, out _);
+        }
+        await base.OnDisconnectedAsync(exception);
     }
 }

@@ -1,3 +1,4 @@
+
 // This file configures the application's services and HTTP request pipeline.
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.AspNetCore.StaticFiles; // Add this using directive for StaticFileOptions

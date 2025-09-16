@@ -18,6 +18,12 @@ namespace DocTalk.Controllers
             return View();
         }
 
+        // Add this new action to render the Doctor.cshtml page
+        public IActionResult Doctor()
+        {
+            return View();
+        }
+
         public IActionResult Privacy()
         {
             return View();

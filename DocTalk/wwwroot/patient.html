@@ -46,7 +46,6 @@
             gap: 24px;
         }
 
-        /* Styles for the image and overlay content */
         .image-overlay-container {
             position: relative;
             width: 100%;
@@ -54,7 +53,7 @@
             border-radius: 0.75rem;
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
             overflow: hidden;
-            background-image: url('images/Inpatient-Theatre-KPCC-photo-1-768x432.jpg');
+            background-image: url('https://placehold.co/1200x600/60A5FA/fff?text=Kijabe+Hospital+Background');
             background-size: cover;
             background-position: center;
             display: flex;
@@ -86,6 +85,7 @@
         .chatbox-container {
             flex-grow: 1;
             overflow-y: auto;
+            max-height: 250px;
             margin-bottom: 1rem;
             border: 1px solid #e5e7eb;
             border-radius: 0.5rem;
@@ -93,22 +93,27 @@
             background-color: #f9fafb;
             display: flex;
             flex-direction: column;
-            justify-content: flex-end;
             gap: 0.5rem;
+        }
+
+        .message-bubble {
+            padding: 0.75rem;
+            border-radius: 0.75rem;
+            max-width: 80%;
         }
 
         .received-message {
             background-color: #e5e7eb;
             color: #1f2937;
+            border-bottom-left-radius: 0.25rem;
             align-self: flex-start;
-            border-radius: 0.75rem 0.75rem 0.75rem 0.25rem;
         }
 
         .sent-message {
             background-color: #2563eb;
             color: #ffffff;
+            border-bottom-right-radius: 0.25rem;
             align-self: flex-end;
-            border-radius: 0.75rem 0.75rem 0.25rem 0.75rem;
         }
     </style>
 </head>
@@ -117,7 +122,7 @@
     <div class="sidebar">
         <div class="text-center mb-8">
             <div class="w-full mb-4 flex justify-center">
-                <img src="images/logo.jfif" alt="MediPortal Logo" class="w-32 h-32 object-contain">
+                <img src="https://placehold.co/120x60/d4f0fa/000?text=Kijabe+Hospital" alt="Hospital Logo" class="w-32 h-32 object-contain">
             </div>
             <h1 class="text-xl font-bold text-gray-800">MediPortal</h1>
         </div>
@@ -140,11 +145,7 @@
                 <span>My Profile</span>
             </a>
             <a href="#" class="flex items-center space-x-3 p-3 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors duration-200 mb-2">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17.25a.75.75 0 01.75-.75h.5a.75.75 0 01.75.75v1.5a.75.75 0 01-.75.75h-.5a.75.75 0 01-.75-.75v-1.5zM15 17.25a.75.75 0 01.75-.75h.5a.75.75 0 01.75.75v1.5a.75.75 0 01-.75.75h-.5a.75.75 0 01-.75-.75v-1.5zM12 10.5h.008v.008H12V10.5z"></path></svg>
-                <span>Medical Records</span>
-            </a>
-            <a href="#" class="flex items-center space-x-3 p-3 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors duration-200 mb-2">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.525.27.994.488 1.518.666z"></path></svg>
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37-2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.525.27.994.488 1.518.666z"></path></svg>
                 <span>Settings</span>
             </a>
         </nav>
@@ -196,10 +197,11 @@
         </div>
     </div>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
     <script>
         let connection = null;
-        const currentUser = 'patient@1'; // The patient's unique ID
-        const currentRecipient = 'doctor@1'; // The doctor's unique ID
+        const currentUser = 'John Smith';
+        const currentRecipient = 'Jane Doe';
         const chatMessagesContainer = document.getElementById('chat-messages-container');
         const chatForm = document.getElementById('chat-form');
         const chatInput = document.getElementById('chat-input');
@@ -211,8 +213,7 @@
                 .build();
 
             connection.on("ReceiveMessage", (sender, message) => {
-                // Only append messages if they are from the expected doctor
-                if (sender === currentRecipient) {
+                if (sender === currentRecipient || sender === "System" || sender === currentUser) {
                     appendMessage(sender, message);
                 }
             });
@@ -223,15 +224,21 @@
                 await connection.invoke("JoinChat", currentUser);
             } catch (err) {
                 console.error("SignalR Connection Error: ", err);
+                setTimeout(startConnection, 5000);
             }
         }
 
         function appendMessage(sender, message) {
             const isMyMessage = sender === currentUser;
+            const messageWrapper = document.createElement('div');
+            messageWrapper.className = `flex ${isMyMessage ? 'justify-end' : 'justify-start'} w-full`;
+
             const messageElement = document.createElement('div');
-            messageElement.className = `p-3 my-1 rounded-lg max-w-[80%] break-words ${isMyMessage ? 'sent-message self-end' : 'received-message self-start'}`;
-            messageElement.innerHTML = `<p class="text-sm">${message}</p>`;
-            chatMessagesContainer.appendChild(messageElement);
+            messageElement.className = `message-bubble ${isMyMessage ? 'sent-message' : 'received-message'}`;
+            messageElement.innerHTML = `<span class="block font-bold">${sender}:</span> ${message}`;
+
+            messageWrapper.appendChild(messageElement);
+            chatMessagesContainer.appendChild(messageWrapper);
             chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
         }
 
@@ -240,7 +247,6 @@
             const message = chatInput.value;
             if (connection && connection.state === signalR.HubConnectionState.Connected && message) {
                 try {
-                    // Send the message directly to the doctor
                     await connection.invoke("SendMessage", currentUser, currentRecipient, message);
                     appendMessage(currentUser, message);
                     chatInput.value = '';

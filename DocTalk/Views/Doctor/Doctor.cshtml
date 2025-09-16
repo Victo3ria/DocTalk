@@ -1,0 +1,230 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Doctor's Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+            color: #1f2937;
+        }
+
+        .image-overlay-container {
+            background-image: url('https://placehold.co/1200x600/60a5fa/fff?text=Hospital+View');
+            background-size: cover;
+            background-position: center;
+        }
+
+        /* Custom scrollbar for the chat container */
+        .chat-messages-container::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .chat-messages-container::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+
+        .chat-messages-container::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 10px;
+        }
+
+            .chat-messages-container::-webkit-scrollbar-thumb:hover {
+                background: #555;
+            }
+
+        /* Styles for sent and received messages */
+        .sent-message {
+            background-color: #2563eb;
+            color: #ffffff;
+            align-self: flex-end;
+            border-radius: 0.75rem 0.75rem 0.25rem 0.75rem;
+        }
+
+        .received-message {
+            background-color: #e5e7eb;
+            color: #1f2937;
+            align-self: flex-start;
+            border-radius: 0.75rem 0.75rem 0.75rem 0.25rem;
+        }
+    </style>
+</head>
+<body class="flex flex-col md:flex-row min-h-screen">
+    <!-- Sidebar -->
+    <aside class="w-full md:w-64 bg-white p-6 shadow-lg md:flex flex-col hidden">
+        <div class="mb-8 text-center">
+            <h1 class="text-2xl font-bold text-gray-900">MediPortal</h1>
+            <div class="mt-4">
+                <div class="mx-auto h-24 w-24 rounded-full bg-blue-500 flex items-center justify-center text-white text-4xl font-bold">U</div>
+                <div class="mt-2 font-semibold text-gray-800">Jane Doe</div>
+                <div class="text-sm text-gray-500">Doctor</div>
+            </div>
+        </div>
+        <nav class="space-y-4 flex-1">
+            <a href="#" class="flex items-center space-x-3 p-3 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors duration-200">
+                <i class="fas fa-tachometer-alt fa-lg"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="#" class="flex items-center space-x-3 p-3 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors duration-200">
+                <i class="fas fa-user-injured fa-lg"></i>
+                <span>Patients</span>
+            </a>
+            <a href="#" class="flex items-center space-x-3 p-3 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors duration-200">
+                <i class="fas fa-file-medical fa-lg"></i>
+                <span>Reports</span>
+            </a>
+            <a href="#" class="flex items-center space-x-3 p-3 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors duration-200">
+                <i class="fas fa-cog fa-lg"></i>
+                <span>Settings</span>
+            </a>
+        </nav>
+        <div class="mt-auto pt-6 text-center text-gray-400 text-xs border-t border-gray-200">
+            <p>&copy; 2025 MediPortal. All rights reserved.</p>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 p-6 space-y-8 overflow-y-auto">
+        <div class="image-overlay-container rounded-xl shadow-xl p-8">
+            <div class="overlay-content max-w-7xl mx-auto flex flex-col md:flex-row gap-6">
+                <div class="bg-white bg-opacity-85 rounded-xl shadow-2xl p-6 flex-1 flex flex-col">
+                    <h3 class="text-xl font-bold text-gray-900 mb-4">Services List</h3>
+                    <div class="space-y-4" id="services-list-container">
+                        <!-- Services will be dynamically added here -->
+                    </div>
+                </div>
+                <div class="bg-white bg-opacity-85 rounded-xl shadow-2xl p-6 flex-1 flex flex-col h-[500px]">
+                    <div id="chat-messages-container" class="flex-1 overflow-y-auto mb-4 border border-gray-200 rounded-lg p-4 bg-gray-50 flex flex-col space-y-2 chat-messages-container">
+                        <p class="text-sm text-gray-600 text-center">Select a patient to begin a consultation.</p>
+                    </div>
+                    <form id="chat-form" class="flex items-center space-x-3">
+                        <input type="text" id="chat-input" placeholder="Type a message..." class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <button type="submit" class="px-6 py-2 rounded-lg text-white bg-blue-600 hover:bg-blue-700 transition-colors duration-200">
+                            Send
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <hr class="w-full h-px my-8 bg-gray-200 border-0">
+        <h2 class="text-2xl font-bold text-gray-900">Dashboard Overview</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <h4 class="text-sm font-medium text-gray-500 mb-2">Total Patients</h4>
+                <div class="text-3xl font-bold text-blue-600">4,120</div>
+            </div>
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <h4 class="text-sm font-medium text-gray-500 mb-2">Upcoming Appointments</h4>
+                <div class="text-3xl font-bold text-orange-500">25</div>
+            </div>
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <h4 class="text-sm font-medium text-gray-500 mb-2">New Messages</h4>
+                <div class="text-3xl font-bold text-green-600">7</div>
+            </div>
+        </div>
+    </main>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        setLogLevel('debug');
+
+        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        let userId = 'anonymous';
+
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                userId = user.uid;
+                console.log('Signed in as', userId);
+                initChatApp();
+            } else {
+                if (initialAuthToken) {
+                    try {
+                        await signInWithCustomToken(auth, initialAuthToken);
+                    } catch (error) {
+                        console.error("Error signing in with custom token:", error);
+                        await signInAnonymously(auth);
+                    }
+                } else {
+                    await signInAnonymously(auth);
+                }
+            }
+        });
+
+        function initChatApp() {
+            const chatForm = document.getElementById('chat-form');
+            const messageInput = document.getElementById('chat-input');
+            const chatMessagesContainer = document.getElementById('chat-messages-container');
+
+            chatForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const message = messageInput.value.trim();
+                if (message === '') return;
+
+                try {
+                    const collectionPath = `artifacts/${appId}/public/data/chat_messages`;
+                    await addDoc(collection(db, collectionPath), {
+                        userId: userId,
+                        text: message,
+                        timestamp: serverTimestamp(),
+                    });
+                    messageInput.value = '';
+                } catch (e) {
+                    console.error("Error adding document: ", e);
+                }
+            });
+
+            const q = query(collection(db, `artifacts/${appId}/public/data/chat_messages`), orderBy("timestamp"));
+            onSnapshot(q, (querySnapshot) => {
+                chatMessagesContainer.innerHTML = '';
+                querySnapshot.forEach((doc) => {
+                    const msg = doc.data();
+                    const isCurrentUser = msg.userId === userId;
+                    const messageElement = document.createElement('div');
+                    messageElement.className = `p-3 my-1 rounded-lg max-w-[80%] break-words ${isCurrentUser ? 'sent-message' : 'received-message'}`;
+                    messageElement.innerHTML = `<p class="text-sm">${msg.text}</p><p class="text-xs opacity-60 mt-1">${msg.userId.substring(0, 8)}...</p>`;
+                    chatMessagesContainer.appendChild(messageElement);
+                    chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
+                });
+            }, (error) => {
+                console.error("Error listening to messages: ", error);
+            });
+        }
+
+        function populateServices() {
+            const services = ["Cardiology", "Orthopedics", "Dermatology", "Pediatrics", "General Surgery"];
+            const servicesContainer = document.getElementById('services-list-container');
+            servicesContainer.innerHTML = '';
+            services.forEach(service => {
+                const serviceElement = document.createElement('div');
+                serviceElement.className = 'p-4 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors duration-200';
+                serviceElement.innerHTML = `<p class="font-medium text-gray-800">${service}</p>`;
+                servicesContainer.appendChild(serviceElement);
+            });
+        }
+
+        window.onload = function() {
+            populateServices();
+        };
+    </script>
+</body>
+</html>
